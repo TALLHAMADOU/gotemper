@@ -40,6 +40,10 @@ gotemper check --url https://api.example.com --debug-endpoints
 
 # Rate limiting personnalisé (5 requêtes par 2 secondes)
 gotemper check --url https://api.example.com --fuzz --rate-limit 5 --rate-window 2s
+
+# Export du rapport
+gotemper check --url https://api.example.com --fuzz --cors --output json > report.json
+gotemper check --url https://api.example.com --fuzz --cors --output html > report.html
 ```
 
 ## Utilisation en tant que librairie
@@ -70,6 +74,8 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 
 `RateLimit(n, period)` s'applique à **toutes** les requêtes du scénario (header check, fuzzing, CORS, debug endpoints) via le `http.RoundTripper` du client — pas seulement au premier appel. Par défaut le CLI limite à 100 requêtes/seconde ; réglable avec `--rate-limit` et `--rate-window`.
 
+`report.JSON()` / `report.WriteJSON(w)` exportent le scénario, un résumé par sévérité (`Summary`) et la liste des findings. `report.HTML()` / `report.WriteHTML(w)` génèrent une page autonome (thème sombre, un badge par sévérité) — via `html/template`, donc les payloads de fuzzing potentiellement réfléchis dans un message (`<script>...</script>`) sont toujours échappés, jamais rendus tels quels.
+
 ## Roadmap
 
 - [x] Vérification des headers de sécurité
@@ -77,7 +83,7 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 - [x] Détection CORS mal configuré
 - [x] Détection d'endpoints de debug exposés
 - [x] Rate limiting effectif sur les scénarios multi-requêtes
-- [ ] Reporting JSON/HTML
+- [x] Reporting JSON/HTML
 - [ ] Intégration CI/CD (échec de pipeline sur régression de sécurité)
 
 ## Licence

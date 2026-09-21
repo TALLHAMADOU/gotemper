@@ -16,14 +16,14 @@ const (
 
 // Finding is one issue surfaced while running a Scenario.
 type Finding struct {
-	Severity Severity
-	Message  string
+	Severity Severity `json:"severity"`
+	Message  string   `json:"message"`
 }
 
 // Report collects the findings produced by Run.
 type Report struct {
-	Scenario string
-	Findings []Finding
+	Scenario string    `json:"scenario"`
+	Findings []Finding `json:"findings"`
 }
 
 // HasCritical reports whether any finding is critical.

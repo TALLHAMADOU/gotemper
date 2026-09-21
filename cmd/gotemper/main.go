@@ -39,6 +39,7 @@ func checkCommand() *cli.Command {
 			&cli.BoolFlag{Name: "debug-endpoints", Usage: "Sonde les endpoints de debug/admin courants (.env, .git, actuator, pprof...)"},
 			&cli.IntFlag{Name: "rate-limit", Value: 100, Usage: "Nombre maximum de requêtes par fenêtre (rate limiting)"},
 			&cli.DurationFlag{Name: "rate-window", Value: time.Second, Usage: "Durée de la fenêtre de rate limiting (ex: 1s, 500ms)"},
+			&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Value: "terminal", Usage: "Format de sortie : terminal, json, html"},
 			&cli.BoolFlag{Name: "fail-on-critical", Usage: "Termine avec un code non nul si un finding critique est trouvé"},
 		},
 		Action: func(c *cli.Context) error {
@@ -63,13 +64,24 @@ func checkCommand() *cli.Command {
 
 			report := gotemper.Run(scenario)
 
-			fmt.Printf("🔍 GoTemper — scénario %q sur %s\n", report.Scenario, c.String("url"))
-			if len(report.Findings) == 0 {
-				fmt.Println("✅ Aucun finding.")
-				return nil
-			}
-			for _, f := range report.Findings {
-				fmt.Printf("  [%s] %s\n", f.Severity, f.Message)
+			switch c.String("output") {
+			case "json":
+				if err := report.WriteJSON(os.Stdout); err != nil {
+					return err
+				}
+				fmt.Println()
+			case "html":
+				if err := report.WriteHTML(os.Stdout); err != nil {
+					return err
+				}
+			default:
+				fmt.Printf("🔍 GoTemper — scénario %q sur %s\n", report.Scenario, c.String("url"))
+				if len(report.Findings) == 0 {
+					fmt.Println("✅ Aucun finding.")
+				}
+				for _, f := range report.Findings {
+					fmt.Printf("  [%s] %s\n", f.Severity, f.Message)
+				}
 			}
 
 			if c.Bool("fail-on-critical") {
