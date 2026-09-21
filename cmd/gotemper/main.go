@@ -40,9 +40,16 @@ func checkCommand() *cli.Command {
 			&cli.IntFlag{Name: "rate-limit", Value: 100, Usage: "Nombre maximum de requêtes par fenêtre (rate limiting)"},
 			&cli.DurationFlag{Name: "rate-window", Value: time.Second, Usage: "Durée de la fenêtre de rate limiting (ex: 1s, 500ms)"},
 			&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Value: "terminal", Usage: "Format de sortie : terminal, json, html"},
-			&cli.BoolFlag{Name: "fail-on-critical", Usage: "Termine avec un code non nul si un finding critique est trouvé"},
+			&cli.StringFlag{Name: "fail-on", Usage: "Fait échouer le pipeline (exit 1) si un finding de cette sévérité ou pire est présent : critical, high, info. Vide = ne jamais échouer."},
 		},
 		Action: func(c *cli.Context) error {
+			threshold := gotemper.Severity(c.String("fail-on"))
+			switch threshold {
+			case "", gotemper.SeverityCritical, gotemper.SeverityHigh, gotemper.SeverityInfo:
+			default:
+				return fmt.Errorf("--fail-on invalide (%q) : attendu critical, high ou info", threshold)
+			}
+
 			scenario := gotemper.NewScenario("api-check").
 				Target(c.String("url")).
 				CheckHeaders(gotemper.SecurityHeaders).
@@ -84,8 +91,8 @@ func checkCommand() *cli.Command {
 				}
 			}
 
-			if c.Bool("fail-on-critical") {
-				report.FailBuildIfCritical()
+			if threshold != "" {
+				report.FailBuildIfSeverity(threshold)
 			}
 			return nil
 		},

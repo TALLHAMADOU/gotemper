@@ -11,7 +11,7 @@ Dans la lignée de [k6](https://k6.io) (load testing) et [Nuclei](https://github
 
 ## Statut
 
-🚧 En développement actif. La v0.1 couvre la vérification de headers de sécurité ; le scripting de scénarios, la génération de payloads de fuzzing et le reporting JSON/HTML arrivent ensuite.
+🚧 En développement actif. Toutes les briques du MVP sont posées : headers de sécurité, fuzzing, CORS, endpoints de debug, rate limiting effectif, reporting JSON/HTML et intégration CI/CD.
 
 ## Installation
 
@@ -23,7 +23,7 @@ go install github.com/TALLHAMADOU/gotemper/cmd/gotemper@latest
 
 ```bash
 gotemper check --url https://api.example.com
-gotemper check --url https://api.example.com --fail-on-critical
+gotemper check --url https://api.example.com --fail-on critical
 
 # Fuzzing des edge-cases courants (chaînes vides/géantes, quotes SQL,
 # balises script, path traversal...) sur le paramètre "input"
@@ -76,6 +76,45 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 
 `report.JSON()` / `report.WriteJSON(w)` exportent le scénario, un résumé par sévérité (`Summary`) et la liste des findings. `report.HTML()` / `report.WriteHTML(w)` génèrent une page autonome (thème sombre, un badge par sévérité) — via `html/template`, donc les payloads de fuzzing potentiellement réfléchis dans un message (`<script>...</script>`) sont toujours échappés, jamais rendus tels quels.
 
+`--fail-on critical|high|info` (ou `report.FailBuildIfSeverity(seuil)` en librairie) fait échouer le processus avec un exit code non nul dès qu'un finding de cette sévérité ou pire est présent — c'est le point d'accroche pour faire échouer un pipeline CI sur une régression de sécurité. `report.FailBuildIfCritical()` reste disponible comme raccourci pour le seuil `critical`.
+
+## Intégration CI/CD
+
+GoTemper est pensé pour être lancé directement dans votre pipeline et faire échouer le build sur une régression. Exemple GitHub Actions :
+
+```yaml
+name: Security check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  gotemper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GoTemper
+        run: go install github.com/TALLHAMADOU/gotemper/cmd/gotemper@latest
+
+      - name: Run GoTemper against staging
+        run: |
+          gotemper check \
+            --url https://staging.example.com \
+            --fuzz --cors --debug-endpoints \
+            --output json --fail-on critical > gotemper-report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gotemper-report
+          path: gotemper-report.json
+```
+
+Le job échoue (exit code 1) dès qu'un finding `critical` est trouvé ; passez `--fail-on high` pour être plus strict. Le rapport JSON reste disponible comme artefact même quand le job échoue (`if: always()`), pour l'inspecter ou le publier ailleurs (dashboard, Slack...).
+
+Le dépôt lui-même est testé sur chaque push/PR via [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (build, vet, tests avec `-race`).
+
 ## Roadmap
 
 - [x] Vérification des headers de sécurité
@@ -84,7 +123,7 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 - [x] Détection d'endpoints de debug exposés
 - [x] Rate limiting effectif sur les scénarios multi-requêtes
 - [x] Reporting JSON/HTML
-- [ ] Intégration CI/CD (échec de pipeline sur régression de sécurité)
+- [x] Intégration CI/CD (échec de pipeline sur régression de sécurité)
 
 ## Licence
 
