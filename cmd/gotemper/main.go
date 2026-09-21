@@ -37,13 +37,15 @@ func checkCommand() *cli.Command {
 			&cli.StringFlag{Name: "fuzz-param", Value: "input", Usage: "Nom du paramètre de requête utilisé pour le fuzzing"},
 			&cli.BoolFlag{Name: "cors", Usage: "Vérifie la configuration CORS (wildcard + credentials, reflet d'origine non validée)"},
 			&cli.BoolFlag{Name: "debug-endpoints", Usage: "Sonde les endpoints de debug/admin courants (.env, .git, actuator, pprof...)"},
+			&cli.IntFlag{Name: "rate-limit", Value: 100, Usage: "Nombre maximum de requêtes par fenêtre (rate limiting)"},
+			&cli.DurationFlag{Name: "rate-window", Value: time.Second, Usage: "Durée de la fenêtre de rate limiting (ex: 1s, 500ms)"},
 			&cli.BoolFlag{Name: "fail-on-critical", Usage: "Termine avec un code non nul si un finding critique est trouvé"},
 		},
 		Action: func(c *cli.Context) error {
 			scenario := gotemper.NewScenario("api-check").
 				Target(c.String("url")).
 				CheckHeaders(gotemper.SecurityHeaders).
-				RateLimit(100, time.Second)
+				RateLimit(c.Int("rate-limit"), c.Duration("rate-window"))
 
 			if c.Bool("fuzz") {
 				scenario = scenario.

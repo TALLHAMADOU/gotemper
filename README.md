@@ -37,6 +37,9 @@ gotemper check --url https://api.example.com --cors
 
 # Recherche d'endpoints de debug/admin exposés
 gotemper check --url https://api.example.com --debug-endpoints
+
+# Rate limiting personnalisé (5 requêtes par 2 secondes)
+gotemper check --url https://api.example.com --fuzz --rate-limit 5 --rate-window 2s
 ```
 
 ## Utilisation en tant que librairie
@@ -65,13 +68,15 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 
 `CheckDebugEndpoints` sonde une liste d'endpoints connus (`.env`, `.git/config`, `.aws/credentials`, Spring Actuator, pprof, phpinfo, Symfony profiler, Swagger, GraphQL, Prometheus `/metrics`...) sur la racine du domaine cible, et compare chaque réponse à une route aléatoire inexistante pour ne pas remonter de faux positifs sur les serveurs qui répondent 200 à tout (SPA catch-all).
 
+`RateLimit(n, period)` s'applique à **toutes** les requêtes du scénario (header check, fuzzing, CORS, debug endpoints) via le `http.RoundTripper` du client — pas seulement au premier appel. Par défaut le CLI limite à 100 requêtes/seconde ; réglable avec `--rate-limit` et `--rate-window`.
+
 ## Roadmap
 
 - [x] Vérification des headers de sécurité
 - [x] Fuzzing de payloads (CommonEdgeCases)
 - [x] Détection CORS mal configuré
 - [x] Détection d'endpoints de debug exposés
-- [ ] Rate limiting effectif sur les scénarios multi-requêtes
+- [x] Rate limiting effectif sur les scénarios multi-requêtes
 - [ ] Reporting JSON/HTML
 - [ ] Intégration CI/CD (échec de pipeline sur régression de sécurité)
 

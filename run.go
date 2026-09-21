@@ -2,13 +2,9 @@ package gotemper
 
 import (
 	"fmt"
-	"net/http"
-	"time"
 )
 
 // Run executes the scenario against its target and returns a Report.
-//
-// Rate-limited request bursts land in a later iteration.
 func Run(s *Scenario) *Report {
 	report := &Report{Scenario: s.name}
 
@@ -20,7 +16,7 @@ func Run(s *Scenario) *Report {
 		return report
 	}
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := newHTTPClient(s)
 	resp, err := client.Get(s.target)
 	if err != nil {
 		report.Findings = append(report.Findings, Finding{
