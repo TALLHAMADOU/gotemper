@@ -54,5 +54,9 @@ func Run(s *Scenario) *Report {
 		report.Findings = append(report.Findings, checkCORS(client, s.target)...)
 	}
 
+	if s.debugCheck {
+		report.Findings = append(report.Findings, checkDebugEndpoints(client, s.target)...)
+	}
+
 	return report
 }

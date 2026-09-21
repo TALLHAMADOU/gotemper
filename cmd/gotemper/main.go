@@ -36,6 +36,7 @@ func checkCommand() *cli.Command {
 			&cli.BoolFlag{Name: "fuzz", Usage: "Envoie les payloads d'edge-case courants (CommonEdgeCases) pour tester la robustesse"},
 			&cli.StringFlag{Name: "fuzz-param", Value: "input", Usage: "Nom du paramètre de requête utilisé pour le fuzzing"},
 			&cli.BoolFlag{Name: "cors", Usage: "Vérifie la configuration CORS (wildcard + credentials, reflet d'origine non validée)"},
+			&cli.BoolFlag{Name: "debug-endpoints", Usage: "Sonde les endpoints de debug/admin courants (.env, .git, actuator, pprof...)"},
 			&cli.BoolFlag{Name: "fail-on-critical", Usage: "Termine avec un code non nul si un finding critique est trouvé"},
 		},
 		Action: func(c *cli.Context) error {
@@ -52,6 +53,10 @@ func checkCommand() *cli.Command {
 
 			if c.Bool("cors") {
 				scenario = scenario.CheckCORS()
+			}
+
+			if c.Bool("debug-endpoints") {
+				scenario = scenario.CheckDebugEndpoints()
 			}
 
 			report := gotemper.Run(scenario)

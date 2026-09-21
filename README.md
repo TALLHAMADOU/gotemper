@@ -34,6 +34,9 @@ gotemper check --url https://api.example.com --fuzz --fuzz-param q
 
 # Vérification CORS
 gotemper check --url https://api.example.com --cors
+
+# Recherche d'endpoints de debug/admin exposés
+gotemper check --url https://api.example.com --debug-endpoints
 ```
 
 ## Utilisation en tant que librairie
@@ -43,6 +46,7 @@ scenario := gotemper.NewScenario("api-check").
     Target("https://api.example.com").
     CheckHeaders(gotemper.SecurityHeaders).
     CheckCORS().
+    CheckDebugEndpoints().
     RateLimit(100, time.Second)
 
 report := gotemper.Run(scenario)
@@ -59,12 +63,14 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 - le reflet de n'importe quelle origine sans validation (élevé),
 - un `Access-Control-Allow-Origin: *` seul, à confirmer si voulu (info).
 
+`CheckDebugEndpoints` sonde une liste d'endpoints connus (`.env`, `.git/config`, `.aws/credentials`, Spring Actuator, pprof, phpinfo, Symfony profiler, Swagger, GraphQL, Prometheus `/metrics`...) sur la racine du domaine cible, et compare chaque réponse à une route aléatoire inexistante pour ne pas remonter de faux positifs sur les serveurs qui répondent 200 à tout (SPA catch-all).
+
 ## Roadmap
 
 - [x] Vérification des headers de sécurité
 - [x] Fuzzing de payloads (CommonEdgeCases)
 - [x] Détection CORS mal configuré
-- [ ] Détection d'endpoints de debug exposés
+- [x] Détection d'endpoints de debug exposés
 - [ ] Rate limiting effectif sur les scénarios multi-requêtes
 - [ ] Reporting JSON/HTML
 - [ ] Intégration CI/CD (échec de pipeline sur régression de sécurité)

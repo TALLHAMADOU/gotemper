@@ -21,6 +21,7 @@ type Scenario struct {
 	fuzzPayloads    []Payload
 	fuzzParam       string
 	corsCheck       bool
+	debugCheck      bool
 	rateLimitN      int
 	ratePeriod      time.Duration
 }
@@ -60,6 +61,13 @@ func (s *Scenario) FuzzParam(name string) *Scenario {
 // combined with credentials, or blind reflection of an untrusted origin.
 func (s *Scenario) CheckCORS() *Scenario {
 	s.corsCheck = true
+	return s
+}
+
+// CheckDebugEndpoints enables probing DebugEndpoints against the target's
+// host, using a random-path baseline to filter out catch-all responses.
+func (s *Scenario) CheckDebugEndpoints() *Scenario {
+	s.debugCheck = true
 	return s
 }
 
