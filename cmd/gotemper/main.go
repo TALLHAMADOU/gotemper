@@ -33,6 +33,8 @@ func checkCommand() *cli.Command {
 		Usage: "Vérifie la présence des headers de sécurité sur une cible",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "url", Required: true, Usage: "URL cible (ex: https://api.example.com)"},
+			&cli.BoolFlag{Name: "fuzz", Usage: "Envoie les payloads d'edge-case courants (CommonEdgeCases) pour tester la robustesse"},
+			&cli.StringFlag{Name: "fuzz-param", Value: "input", Usage: "Nom du paramètre de requête utilisé pour le fuzzing"},
 			&cli.BoolFlag{Name: "fail-on-critical", Usage: "Termine avec un code non nul si un finding critique est trouvé"},
 		},
 		Action: func(c *cli.Context) error {
@@ -40,6 +42,12 @@ func checkCommand() *cli.Command {
 				Target(c.String("url")).
 				CheckHeaders(gotemper.SecurityHeaders).
 				RateLimit(100, time.Second)
+
+			if c.Bool("fuzz") {
+				scenario = scenario.
+					FuzzInputs(gotemper.CommonEdgeCases).
+					FuzzParam(c.String("fuzz-param"))
+			}
 
 			report := gotemper.Run(scenario)
 

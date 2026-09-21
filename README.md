@@ -24,6 +24,13 @@ go install github.com/TALLHAMADOU/gotemper/cmd/gotemper@latest
 ```bash
 gotemper check --url https://api.example.com
 gotemper check --url https://api.example.com --fail-on-critical
+
+# Fuzzing des edge-cases courants (chaînes vides/géantes, quotes SQL,
+# balises script, path traversal...) sur le paramètre "input"
+gotemper check --url https://api.example.com --fuzz
+
+# Sur un autre paramètre de requête
+gotemper check --url https://api.example.com --fuzz --fuzz-param q
 ```
 
 ## Utilisation en tant que librairie
@@ -38,10 +45,15 @@ report := gotemper.Run(scenario)
 report.FailBuildIfCritical()
 ```
 
+Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste personnalisée de `gotemper.Payload`) comme valeur d'un paramètre de requête, et détecte :
+- les erreurs serveur (5xx) déclenchées par un payload,
+- le reflet non échappé de balises/quotes dans la réponse (XSS potentiel),
+- les fuites de traces d'erreur internes (stack traces, messages SQL bruts...).
+
 ## Roadmap
 
 - [x] Vérification des headers de sécurité
-- [ ] Fuzzing de payloads (CommonEdgeCases)
+- [x] Fuzzing de payloads (CommonEdgeCases)
 - [ ] Détection CORS mal configuré
 - [ ] Détection d'endpoints de debug exposés
 - [ ] Rate limiting effectif sur les scénarios multi-requêtes

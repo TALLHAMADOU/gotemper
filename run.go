@@ -41,5 +41,15 @@ func Run(s *Scenario) *Report {
 		}
 	}
 
+	if len(s.fuzzPayloads) > 0 {
+		param := s.fuzzParam
+		if param == "" {
+			param = defaultFuzzParam
+		}
+		for _, payload := range s.fuzzPayloads {
+			report.Findings = append(report.Findings, fuzzOne(client, s.target, param, payload)...)
+		}
+	}
+
 	return report
 }

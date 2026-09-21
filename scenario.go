@@ -18,6 +18,8 @@ type Scenario struct {
 	name            string
 	target          string
 	requiredHeaders []string
+	fuzzPayloads    []Payload
+	fuzzParam       string
 	rateLimitN      int
 	ratePeriod      time.Duration
 }
@@ -36,6 +38,20 @@ func (s *Scenario) Target(url string) *Scenario {
 // CheckHeaders records which response headers must be present on the target.
 func (s *Scenario) CheckHeaders(headers []string) *Scenario {
 	s.requiredHeaders = headers
+	return s
+}
+
+// FuzzInputs records which edge-case payloads to send as a query parameter
+// during Run, to check how the target handles malformed input.
+func (s *Scenario) FuzzInputs(payloads []Payload) *Scenario {
+	s.fuzzPayloads = payloads
+	return s
+}
+
+// FuzzParam sets the query parameter name payloads are injected into.
+// Defaults to "input" when not called.
+func (s *Scenario) FuzzParam(name string) *Scenario {
+	s.fuzzParam = name
 	return s
 }
 
