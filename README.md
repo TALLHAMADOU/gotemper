@@ -31,6 +31,9 @@ gotemper check --url https://api.example.com --fuzz
 
 # Sur un autre paramètre de requête
 gotemper check --url https://api.example.com --fuzz --fuzz-param q
+
+# Vérification CORS
+gotemper check --url https://api.example.com --cors
 ```
 
 ## Utilisation en tant que librairie
@@ -39,6 +42,7 @@ gotemper check --url https://api.example.com --fuzz --fuzz-param q
 scenario := gotemper.NewScenario("api-check").
     Target("https://api.example.com").
     CheckHeaders(gotemper.SecurityHeaders).
+    CheckCORS().
     RateLimit(100, time.Second)
 
 report := gotemper.Run(scenario)
@@ -50,11 +54,16 @@ Le fuzzing envoie chaque payload de `gotemper.CommonEdgeCases` (ou une liste per
 - le reflet non échappé de balises/quotes dans la réponse (XSS potentiel),
 - les fuites de traces d'erreur internes (stack traces, messages SQL bruts...).
 
+`CheckCORS` envoie une requête avec un `Origin` arbitraire et détecte :
+- `Access-Control-Allow-Origin: *` combiné à `Access-Control-Allow-Credentials: true` (critique),
+- le reflet de n'importe quelle origine sans validation (élevé),
+- un `Access-Control-Allow-Origin: *` seul, à confirmer si voulu (info).
+
 ## Roadmap
 
 - [x] Vérification des headers de sécurité
 - [x] Fuzzing de payloads (CommonEdgeCases)
-- [ ] Détection CORS mal configuré
+- [x] Détection CORS mal configuré
 - [ ] Détection d'endpoints de debug exposés
 - [ ] Rate limiting effectif sur les scénarios multi-requêtes
 - [ ] Reporting JSON/HTML

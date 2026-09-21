@@ -8,8 +8,7 @@ import (
 
 // Run executes the scenario against its target and returns a Report.
 //
-// The current implementation performs the header check; rate-limited request
-// bursts and payload fuzzing land in a later iteration.
+// Rate-limited request bursts land in a later iteration.
 func Run(s *Scenario) *Report {
 	report := &Report{Scenario: s.name}
 
@@ -49,6 +48,10 @@ func Run(s *Scenario) *Report {
 		for _, payload := range s.fuzzPayloads {
 			report.Findings = append(report.Findings, fuzzOne(client, s.target, param, payload)...)
 		}
+	}
+
+	if s.corsCheck {
+		report.Findings = append(report.Findings, checkCORS(client, s.target)...)
 	}
 
 	return report

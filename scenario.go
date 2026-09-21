@@ -20,6 +20,7 @@ type Scenario struct {
 	requiredHeaders []string
 	fuzzPayloads    []Payload
 	fuzzParam       string
+	corsCheck       bool
 	rateLimitN      int
 	ratePeriod      time.Duration
 }
@@ -52,6 +53,13 @@ func (s *Scenario) FuzzInputs(payloads []Payload) *Scenario {
 // Defaults to "input" when not called.
 func (s *Scenario) FuzzParam(name string) *Scenario {
 	s.fuzzParam = name
+	return s
+}
+
+// CheckCORS enables probing the target's CORS policy for a wildcard origin
+// combined with credentials, or blind reflection of an untrusted origin.
+func (s *Scenario) CheckCORS() *Scenario {
+	s.corsCheck = true
 	return s
 }
 
